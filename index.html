@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bookmark & Link Manager</title>
+  <!-- Google Fonts & Font Awesome for Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    :root {
+      --primary-color: #4f46e5;
+      --primary-hover: #4338ca;
+      --bg-gradient: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%);
+      --card-bg: #ffffff;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --border-color: #e5e7eb;
+      --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+      --shadow-lg: 0 10px 25px -5px rgba(79, 70, 229, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    /* Header Section */
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #111827;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .header p {
+      color: var(--text-muted);
+      margin-top: 8px;
+      font-size: 0.95rem;
+    }
+
+    /* Card Styling */
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: var(--shadow-lg);
+      margin-bottom: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #111827;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Form Styles */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group.full-width {
+      grid-column: span 2;
+    }
+
+    label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-wrapper i {
+      position: absolute;
+      left: 14px;
+      color: #9ca3af;
+      font-size: 0.9rem;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px 14px 12px 40px;
+      border: 1.5px solid var(--border-color);
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      background-color: #f9fafb;
+      color: var(--text-main);
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      background-color: #fff;
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+    }
+
+    /* Button Styles */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 12px 20px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+      margin-top: 10px;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-refresh {
+      width: auto;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      background-color: #f3f4f6;
+      color: #374151;
+    }
+
+    .btn-refresh:hover {
+      background-color: #e5e7eb;
+    }
+
+    /* Notification Status */
+    #status {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-align: center;
+      display: none;
+    }
+
+    #status.success {
+      display: block;
+      background-color: #def7ec;
+      color: #03543f;
+    }
+
+    #status.error {
+      display: block;
+      background-color: #fde8e8;
+      color: #9b1c1c;
+    }
+
+    #status.loading {
+      display: block;
+      background-color: #e1effe;
+      color: #1e429f;
+    }
+
+    /* Table Styles */
+    .table-responsive {
+      overflow-x: auto;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+
+    th {
+      background-color: #f9fafb;
+      padding: 12px 16px;
+      font-weight: 600;
+      color: #4b5563;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-color);
+      color: #374151;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background-color: #f9fafb;
+    }
+
+    /* Category Badge */
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-edukasi { background-color: #e0f2fe; color: #0369a1; }
+    .badge-hiburan { background-color: #fce7f3; color: #9d174d; }
+    .badge-pekerjaan { background-color: #fef3c7; color: #92400e; }
+    .badge-lainnya { background-color: #f3f4f6; color: #374151; }
+
+    /* Action Link Button */
+    .link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--primary-color);
+      font-weight: 600;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .link-btn:hover {
+      color: var(--primary-hover);
+      text-decoration: underline;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 640px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      .form-group.full-width {
+        grid-column: span 1;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- Header -->
+    <div class="header">
+      <h1><i class="fa-solid fa-bookmark" style="color: var(--primary-color);"></i> Link Manager</h1>
+      <p>Simpan dan kelola tautan penting Anda langsung ke Google Sheets</p>
+    </div>
+
+    <!-- Form Card -->
+    <div class="card">
+      <div class="card-title">
+        <span><i class="fa-solid fa-plus"></i> Tambah Link Baru</span>
+      </div>
+
+      <form id="linkForm">
+        <div class="form-grid">
+          
+          <div class="form-group">
+            <label for="nama">Nama / Judul</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-pen"></i>
+              <input type="text" id="nama" required placeholder="Contoh: Document Tutorial">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="kategori">Kategori</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-folder"></i>
+              <select id="kategori" required>
+                <option value="">-- Pilih Kategori --</option>
+                <option value="Edukasi">Edukasi</option>
+                <option value="Hiburan">Hiburan</option>
+                <option value="Pekerjaan">Pekerjaan</option>
+                <option value="Lainnya">Lainnya</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group full-width">
+            <label for="link">URL / Link</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-link"></i>
+              <input type="url" id="link" required placeholder="https://example.com">
+            </div>
+          </div>
+
+        </div>
+
+        <button type="submit" id="btnSubmit" class="btn btn-primary" style="margin-top: 20px;">
+          <i class="fa-solid fa-paper-plane"></i> Simpan Data
+        </button>
+      </form>
+
+      <div id="status"></div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card">
+      <div class="card-title">
+        <span><i class="fa-solid fa-list-check"></i> Daftar Link Tersimpan</span>
+        <button class="btn btn-refresh" onclick="loadData()">
+          <i class="fa-solid fa-rotate-right"></i> Refresh
+        </button>
+      </div>
+
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Nama</th>
+              <th>Kategori</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr>
+              <td colspan="3" style="text-align: center; color: var(--text-muted);">
+                <i class="fa-solid fa-spinner fa-spin"></i> Memuat data...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // URL Web App Google Apps Script Anda
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz6KiLnY8vGH1X8CXl75OtOvNOtYXo44pLIGernZTdMQR4lqOLeT8H74jnySc1gLru2/exec';
+
+    // 1. Fungsi untuk Mengambil Data dari Google Sheet
+    function loadData() {
+      const tableBody = document.getElementById('tableBody');
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="3" style="text-align:center; color: var(--text-muted);">
+            <i class="fa-solid fa-spinner fa-spin"></i> Memuat data...
+          </td>
+        </tr>`;
+
+      fetch(SCRIPT_URL)
+        .then(response => response.json())
+        .then(data => {
+          if (data.result === 'success') {
+            tableBody.innerHTML = '';
+            
+            if (!data.data || data.data.length === 0) {
+              tableBody.innerHTML = `
+                <tr>
+                  <td colspan="3" style="text-align:center; color: var(--text-muted);">
+                    Belum ada data tersimpan.
+                  </td>
+                </tr>`;
+              return;
+            }
+
+            // Tampilkan Data ke Tabel
+            data.data.forEach(item => {
+              const categoryClass = item.kategori ? item.kategori.toLowerCase() : 'lainnya';
+              const row = document.createElement('tr');
+              
+              row.innerHTML = `
+                <td style="font-weight: 600;">${item.nama}</td>
+                <td><span class="badge badge-${categoryClass}">${item.kategori}</span></td>
+                <td>
+                  <a href="${item.link}" target="_blank" class="link-btn">
+                    Buka Link <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.75rem;"></i>
+                  </a>
+                </td>
+              `;
+              tableBody.appendChild(row);
+            });
+          } else {
+            showTableError('Gagal mengambil data dari server.');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showTableError('Terjadi kesalahan koneksi.');
+        });
+    }
+
+    function showTableError(msg) {
+      document.getElementById('tableBody').innerHTML = `
+        <tr>
+          <td colspan="3" style="text-align:center; color: #9b1c1c;">
+            <i class="fa-solid fa-circle-exclamation"></i> ${msg}
+          </td>
+        </tr>`;
+    }
+
+    // 2. Fungsi untuk Mengirim Data ke Google Sheet
+    document.getElementById('linkForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const btnSubmit = document.getElementById('btnSubmit');
+      const statusDiv = document.getElementById('status');
+      
+      btnSubmit.disabled = true;
+      btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+      
+      statusDiv.className = 'loading';
+      statusDiv.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Mengirim data ke Google Sheet...';
+
+      const payload = {
+        nama: document.getElementById('nama').value,
+        kategori: document.getElementById('kategori').value,
+        link: document.getElementById('link').value
+      };
+
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(() => {
+        statusDiv.className = 'success';
+        statusDiv.innerHTML = '<i class="fa-solid fa-circle-check"></i> Data berhasil disimpan!';
+        document.getElementById('linkForm').reset();
+        
+        // Beri jeda 1.2 detik lalu reload tabel secara otomatis
+        setTimeout(() => {
+          loadData();
+          statusDiv.style.display = 'none';
+        }, 1200);
+      })
+      .catch(error => {
+        statusDiv.className = 'error';
+        statusDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Gagal menyimpan data.';
+        console.error('Error:', error);
+      })
+      .finally(() => {
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Simpan Data';
+      });
+    });
+
+    // Load data otomatis saat pertama kali dibuka
+    window.onload = loadData;
+  </script>
+</body>
+</html>
