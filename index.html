@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simpan & Lihat Link Google Sheet</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 650px;
+      margin: 30px auto;
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 25px;
+    }
+    h2, h3 {
+      text-align: center;
+      color: #333;
+      margin-top: 0;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    #status {
+      margin-top: 15px;
+      text-align: center;
+      font-weight: bold;
+    }
+    
+    /* Style untuk Tabel Data */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    a {
+      color: #1a73e8;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .btn-refresh {
+      background-color: #2196F3;
+      margin-bottom: 10px;
+    }
+    .btn-refresh:hover {
+      background-color: #0b7dda;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- FORM INPUT DATA -->
+  <div class="card">
+    <h2>Tambah Link Baru</h2>
+    <form id="linkForm">
+      <div class="form-group">
+        <label for="nama">Nama / Judul:</label>
+        <input type="text" id="nama" required placeholder="Contoh: Website Google">
+      </div>
+
+      <div class="form-group">
+        <label for="kategori">Kategori:</label>
+        <select id="kategori" required>
+          <option value="">-- Pilih Kategori --</option>
+          <option value="Edukasi">Edukasi</option>
+          <option value="Hiburan">Hiburan</option>
+          <option value="Pekerjaan">Pekerjaan</option>
+          <option value="Lainnya">Lainnya</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="link">Link / URL:</label>
+        <input type="url" id="link" required placeholder="https://google.com">
+      </div>
+
+      <button type="submit" id="btnSubmit">Simpan Data</button>
+    </form>
+    <p id="status"></p>
+  </div>
+
+  <!-- TABEL DAFTAR LINK -->
+  <div class="card">
+    <h3>Daftar Link Tersimpan</h3>
+    <button class="btn-refresh" onclick="loadData()">🔄 Refresh Data</button>
+    <table>
+      <thead>
+        <tr>
+          <th>Nama</th>
+          <th>Kategori</th>
+          <th>Aksi / Link</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <tr>
+          <td colspan="3" style="text-align:center;">Memuat data...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // URL Web App Google Apps Script Anda
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz6KiLnY8vGH1X8CXl75OtOvNOtYXo44pLIGernZTdMQR4lqOLeT8H74jnySc1gLru2/exec';
+
+    // 1. Fungsi untuk Mengambil & Menampilkan Data dari Google Sheet
+    function loadData() {
+      const tableBody = document.getElementById('tableBody');
+      tableBody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Memuat data...</td></tr>';
+
+      fetch(SCRIPT_URL)
+        .then(response => response.json())
+        .then(data => {
+          if (data.result === 'success') {
+            tableBody.innerHTML = '';
+            
+            if (data.data.length === 0) {
+              tableBody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Belum ada data tersimpan.</td></tr>';
+              return;
+            }
+
+            // Tampilkan data ke dalam baris tabel
+            data.data.forEach(item => {
+              const row = document.createElement('tr');
+              row.innerHTML = `
+                <td>${item.nama}</td>
+                <td>${item.kategori}</td>
+                <td><a href="${item.link}" target="_blank">Buka Link ↗</a></td>
+              `;
+              tableBody.appendChild(row);
+            });
+          } else {
+            tableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:red;">Gagal mengambil data.</td></tr>';
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          tableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:red;">Terjadi kesalahan koneksi.</td></tr>';
+        });
+    }
+
+    // 2. Kirim Data Form ke Google Sheet
+    document.getElementById('linkForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const btnSubmit = document.getElementById('btnSubmit');
+      const statusText = document.getElementById('status');
+      
+      btnSubmit.disabled = true;
+      statusText.style.color = 'black';
+      statusText.innerText = 'Mengirim data...';
+
+      const payload = {
+        nama: document.getElementById('nama').value,
+        kategori: document.getElementById('kategori').value,
+        link: document.getElementById('link').value
+      };
+
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(() => {
+        statusText.style.color = 'green';
+        statusText.innerText = 'Data berhasil disimpan!';
+        document.getElementById('linkForm').reset();
+        
+        // Beri jeda 1 detik lalu perbarui daftar tabel secara otomatis
+        setTimeout(loadData, 1000);
+      })
+      .catch(error => {
+        statusText.style.color = 'red';
+        statusText.innerText = 'Gagal menyimpan data.';
+        console.error('Error:', error);
+      })
+      .finally(() => {
+        btnSubmit.disabled = false;
+      });
+    });
+
+    // Jalankan fungsi loadData() otomatis saat halaman pertama kali dibuka
+    window.onload = loadData;
+  </script>
+</body>
+</html>
