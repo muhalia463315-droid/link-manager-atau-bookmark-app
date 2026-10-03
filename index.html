@@ -36,7 +36,7 @@
     }
 
     .container {
-      max-width: 800px;
+      max-width: 850px;
       margin: 0 auto;
     }
 
@@ -144,7 +144,6 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      width: 100%;
       padding: 12px 20px;
       font-size: 0.95rem;
       font-weight: 600;
@@ -157,7 +156,6 @@
     .btn-primary {
       background-color: var(--primary-color);
       color: white;
-      margin-top: 10px;
       box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
     }
 
@@ -166,10 +164,13 @@
       transform: translateY(-1px);
     }
 
-    .btn-primary:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
+    .btn-cancel {
+      background-color: #6b7280;
+      color: white;
+    }
+
+    .btn-cancel:hover {
+      background-color: #4b5563;
     }
 
     .btn-refresh {
@@ -182,6 +183,32 @@
 
     .btn-refresh:hover {
       background-color: #e5e7eb;
+    }
+
+    .action-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+
+    .action-btn.edit {
+      color: #d97706;
+    }
+
+    .action-btn.edit:hover {
+      background-color: #fef3c7;
+    }
+
+    .action-btn.delete {
+      color: #dc2626;
+    }
+
+    .action-btn.delete:hover {
+      background-color: #fee2e2;
     }
 
     /* Notification Status */
@@ -249,7 +276,6 @@
       background-color: #f9fafb;
     }
 
-    /* Category Badge */
     .badge {
       display: inline-block;
       padding: 4px 10px;
@@ -265,7 +291,6 @@
     .badge-pekerjaan { background-color: #fef3c7; color: #92400e; }
     .badge-lainnya { background-color: #f3f4f6; color: #374151; }
 
-    /* Action Link Button */
     .link-btn {
       display: inline-flex;
       align-items: center;
@@ -273,7 +298,6 @@
       color: var(--primary-color);
       font-weight: 600;
       text-decoration: none;
-      transition: color 0.2s ease;
     }
 
     .link-btn:hover {
@@ -281,7 +305,6 @@
       text-decoration: underline;
     }
 
-    /* Responsive Design */
     @media (max-width: 640px) {
       .form-grid {
         grid-template-columns: 1fr;
@@ -305,10 +328,13 @@
     <!-- Form Card -->
     <div class="card">
       <div class="card-title">
-        <span><i class="fa-solid fa-plus"></i> Tambah Link Baru</span>
+        <span id="formTitle"><i class="fa-solid fa-plus"></i> Tambah Link Baru</span>
       </div>
 
       <form id="linkForm">
+        <input type="hidden" id="rowId">
+        <input type="hidden" id="actionType" value="add">
+
         <div class="form-grid">
           
           <div class="form-group">
@@ -343,9 +369,14 @@
 
         </div>
 
-        <button type="submit" id="btnSubmit" class="btn btn-primary" style="margin-top: 20px;">
-          <i class="fa-solid fa-paper-plane"></i> Simpan Data
-        </button>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button type="submit" id="btnSubmit" class="btn btn-primary" style="flex: 1;">
+            <i class="fa-solid fa-paper-plane"></i> Simpan Data
+          </button>
+          <button type="button" id="btnCancel" class="btn btn-cancel" style="display: none;" onclick="resetForm()">
+            Batal
+          </button>
+        </div>
       </form>
 
       <div id="status"></div>
@@ -366,12 +397,13 @@
             <tr>
               <th>Nama</th>
               <th>Kategori</th>
-              <th>Aksi</th>
+              <th>Tautan</th>
+              <th style="text-align: center;">Aksi</th>
             </tr>
           </thead>
           <tbody id="tableBody">
             <tr>
-              <td colspan="3" style="text-align: center; color: var(--text-muted);">
+              <td colspan="4" style="text-align: center; color: var(--text-muted);">
                 <i class="fa-solid fa-spinner fa-spin"></i> Memuat data...
               </td>
             </tr>
@@ -383,15 +415,14 @@
   </div>
 
   <script>
-    // URL Web App Google Apps Script Anda
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz6KiLnY8vGH1X8CXl75OtOvNOtYXo44pLIGernZTdMQR4lqOLeT8H74jnySc1gLru2/exec';
+    let globalData = [];
 
-    // 1. Fungsi untuk Mengambil Data dari Google Sheet
     function loadData() {
       const tableBody = document.getElementById('tableBody');
       tableBody.innerHTML = `
         <tr>
-          <td colspan="3" style="text-align:center; color: var(--text-muted);">
+          <td colspan="4" style="text-align:center; color: var(--text-muted);">
             <i class="fa-solid fa-spinner fa-spin"></i> Memuat data...
           </td>
         </tr>`;
@@ -401,19 +432,19 @@
         .then(data => {
           if (data.result === 'success') {
             tableBody.innerHTML = '';
+            globalData = data.data || [];
             
-            if (!data.data || data.data.length === 0) {
+            if (globalData.length === 0) {
               tableBody.innerHTML = `
                 <tr>
-                  <td colspan="3" style="text-align:center; color: var(--text-muted);">
+                  <td colspan="4" style="text-align:center; color: var(--text-muted);">
                     Belum ada data tersimpan.
                   </td>
                 </tr>`;
               return;
             }
 
-            // Tampilkan Data ke Tabel
-            data.data.forEach(item => {
+            globalData.forEach(item => {
               const categoryClass = item.kategori ? item.kategori.toLowerCase() : 'lainnya';
               const row = document.createElement('tr');
               
@@ -422,8 +453,16 @@
                 <td><span class="badge badge-${categoryClass}">${item.kategori}</span></td>
                 <td>
                   <a href="${item.link}" target="_blank" class="link-btn">
-                    Buka Link <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.75rem;"></i>
+                    Buka <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.75rem;"></i>
                   </a>
+                </td>
+                <td style="text-align: center; whitespace: nowrap;">
+                  <button class="action-btn edit" onclick="startEdit(${item.rowId})" title="Edit">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+                  <button class="action-btn delete" onclick="deleteData(${item.rowId})" title="Hapus">
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
                 </td>
               `;
               tableBody.appendChild(row);
@@ -441,26 +480,28 @@
     function showTableError(msg) {
       document.getElementById('tableBody').innerHTML = `
         <tr>
-          <td colspan="3" style="text-align:center; color: #9b1c1c;">
+          <td colspan="4" style="text-align:center; color: #9b1c1c;">
             <i class="fa-solid fa-circle-exclamation"></i> ${msg}
           </td>
         </tr>`;
     }
 
-    // 2. Fungsi untuk Mengirim Data ke Google Sheet
     document.getElementById('linkForm').addEventListener('submit', function(e) {
       e.preventDefault();
       
       const btnSubmit = document.getElementById('btnSubmit');
       const statusDiv = document.getElementById('status');
+      const actionType = document.getElementById('actionType').value;
       
       btnSubmit.disabled = true;
-      btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+      btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
       
       statusDiv.className = 'loading';
-      statusDiv.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Mengirim data ke Google Sheet...';
+      statusDiv.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Mengirim data...';
 
       const payload = {
+        action: actionType,
+        rowId: document.getElementById('rowId').value,
         nama: document.getElementById('nama').value,
         kategori: document.getElementById('kategori').value,
         link: document.getElementById('link').value
@@ -469,17 +510,14 @@
       fetch(SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
       .then(() => {
         statusDiv.className = 'success';
-        statusDiv.innerHTML = '<i class="fa-solid fa-circle-check"></i> Data berhasil disimpan!';
-        document.getElementById('linkForm').reset();
+        statusDiv.innerHTML = actionType === 'edit' ? 'Data berhasil diperbarui!' : 'Data berhasil disimpan!';
+        resetForm();
         
-        // Beri jeda 1.2 detik lalu reload tabel secara otomatis
         setTimeout(() => {
           loadData();
           statusDiv.style.display = 'none';
@@ -487,16 +525,68 @@
       })
       .catch(error => {
         statusDiv.className = 'error';
-        statusDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Gagal menyimpan data.';
+        statusDiv.innerHTML = 'Gagal menyimpan data.';
         console.error('Error:', error);
       })
       .finally(() => {
         btnSubmit.disabled = false;
-        btnSubmit.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Simpan Data';
       });
     });
 
-    // Load data otomatis saat pertama kali dibuka
+    function startEdit(rowId) {
+      const item = globalData.find(d => d.rowId === rowId);
+      if (!item) return;
+
+      document.getElementById('rowId').value = item.rowId;
+      document.getElementById('actionType').value = 'edit';
+      document.getElementById('nama').value = item.nama;
+      document.getElementById('kategori').value = item.kategori;
+      document.getElementById('link').value = item.link;
+
+      document.getElementById('formTitle').innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Edit Link';
+      document.getElementById('btnSubmit').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan';
+      document.getElementById('btnCancel').style.display = 'inline-flex';
+      
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function deleteData(rowId) {
+      if (!confirm('Apakah Anda yakin ingin menghapus link ini?')) return;
+
+      const statusDiv = document.getElementById('status');
+      statusDiv.className = 'loading';
+      statusDiv.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Menghapus data...';
+
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', rowId: rowId })
+      })
+      .then(() => {
+        statusDiv.className = 'success';
+        statusDiv.innerHTML = 'Data berhasil dihapus!';
+        setTimeout(() => {
+          loadData();
+          statusDiv.style.display = 'none';
+        }, 1200);
+      })
+      .catch(error => {
+        statusDiv.className = 'error';
+        statusDiv.innerHTML = 'Gagal menghapus data.';
+        console.error('Error:', error);
+      });
+    }
+
+    function resetForm() {
+      document.getElementById('linkForm').reset();
+      document.getElementById('actionType').value = 'add';
+      document.getElementById('rowId').value = '';
+      document.getElementById('formTitle').innerHTML = '<i class="fa-solid fa-plus"></i> Tambah Link Baru';
+      document.getElementById('btnSubmit').innerHTML = '<i class="fa-solid fa-paper-plane"></i> Simpan Data';
+      document.getElementById('btnCancel').style.display = 'none';
+    }
+
     window.onload = loadData;
   </script>
 </body>
